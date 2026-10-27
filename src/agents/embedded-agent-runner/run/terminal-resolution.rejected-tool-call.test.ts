@@ -127,7 +127,7 @@ function prependFailedExec(
   turn.attempt.itemLifecycle = { startedCount: 2, completedCount: 2, activeCount: 0 };
 }
 
-it.each(["message", "error code", "exec refusal"])(
+it.each(["message", "error code", "gateway diagnostic", "exec refusal"])(
   "continues once after settled tools (%s)",
   async (shape) => {
     const refused = shape === "exec refusal";
@@ -140,7 +140,13 @@ it.each(["message", "error code", "exec refusal"])(
                 errorMessage: "Provider completed tool call with malformed JSON arguments",
                 errorCode: "malformed_tool_call_arguments",
               }
-            : {},
+            : shape === "gateway diagnostic"
+              ? {
+                  api: "anthropic-messages",
+                  provider: "anthropic-relay",
+                  errorMessage: "Upstream returned invalid tool input for 'exec'.",
+                }
+              : {},
         );
     if (!refused) {
       expect(turn.attempt.replayMetadata.hadPotentialSideEffects).toBe(true);
